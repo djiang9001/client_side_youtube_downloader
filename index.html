@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Download Youtube Videos</title>
+</head>
+<noscript>
+    <style type="text/css">
+        .pagecontainer {display:none;}
+    </style>
+    <div class="noscriptmsg">
+    You don't have javascript enabled.  Good luck with that.
+    </div>
+</noscript>
+<div class="pagecontainer">
+	<body>
+	<h1>Download Youtube Videos</h1>
+	<div class="top">
+		<form method="POST" id="url_form">
+		Youtube url: <input type="text" name="url"><br>
+		<br>
+		<input type="submit" value="Submit">
+		</form>
+		<p id="prompt">Submit a valid Youtube URL to show available downloads for your video.</p>
+	
+		<p id="user_input" class="resets"></p>
+	
+		<p id="video_id" class ="resets"></p>
+
+		<p id="message" class="resets"></p>
+	</div>
+	<table style="width:100%" id="download_links">
+		<thead><tr>
+			<th>Download Link</th>
+			<th>File Type</th>
+			<th>Bitrate</th>
+			<th>Width</th>
+			<th>Height</th>
+		<tr></thead>
+		<tbody id="tb" class="resets"></tbody>
+	</table>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="index.js"></script>
+
+	</body>
+</div>
+<html>
