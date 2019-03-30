@@ -58,8 +58,8 @@ function useSTS(sts, videoId) {
 	stsUrl = "https://youtube.com/get_video_info?video_id=" + videoId + "&eurl=https://youtube.googleapis.com/v/" + videoId + "&sts=" + sts;
 	console.log(stsUrl);
 	$.ajax({
-                url: 'http://www.whateverorigin.org/get?url=' + encodeURIComponent(stsUrl) + '&callback=?',
-                dataType: 'json',
+                url: "https://cors-anywhere.herokuapp.com/" + stsUrl,
+                //dataType: 'json',
 		timeout: '10000',
 		error: function(jqXHR, textStatus, errorThrown) {
                         if(textStatus==="timeout") {
@@ -69,7 +69,7 @@ function useSTS(sts, videoId) {
                         }
                 },
                 success: function(data) {
-                        videoInfo = urldecode(data.contents);
+                        videoInfo = urldecode(data);
                         console.log(videoInfo);
                         //figure out if videoInfo is any good
                         var pattern = /reason=/;
@@ -90,8 +90,8 @@ function getVideoInfo2 (videoId) {
 	var embedUrl = "https://youtube.com/embed/" + videoId;
 	var videoInfo = "";
 	$.ajax({
-                url: 'http://www.whateverorigin.org/get?url=' + encodeURIComponent(embedUrl) + '&callback=?',
-                dataType: 'json',
+                url: "https://cors-anywhere.herokuapp.com/" + embedUrl,
+                //dataType: 'json',
 		timeout: '10000',
 		error: function(jqXHR, textStatus, errorThrown) {
                         if(textStatus==="timeout") {
@@ -101,7 +101,7 @@ function getVideoInfo2 (videoId) {
                         }
                 },
                 success: function(data) {
-                        videoInfo = data.contents;
+                        videoInfo = data;
 			//we need to get the sts from videoInfo
 			var sts = getSTS(videoInfo);
 			if (sts) {
@@ -120,18 +120,18 @@ function getVideoInfo (videoId) {
 	var videoInfoUrl = "https://youtube.com/get_video_info?video_id=" + videoId + "&el=detailpage&hl=en";
 	var videoInfo = "";
 	$.ajax({
-  		url: 'http://www.whateverorigin.org/get?url=' + encodeURIComponent(videoInfoUrl) + '&callback=?',
-  		dataType: 'json',
+  		url: "https://cors-anywhere.herokuapp.com/" + videoInfoUrl,
+  		//dataType: 'json',
 		timeout: '10000',
 		error: function(jqXHR, textStatus, errorThrown) {
         		if(textStatus==="timeout") {
            			document.getElementById("message").innerHTML = "Connection timeout.";
         		} else {
-				document.getElementById("message").innerHTML = "Connection failure.";
+				document.getElementById("message").innerHTML = textStatus;
 			}
     		},	
   		success: function(data) {
-    			videoInfo = urldecode(data.contents);
+    			videoInfo = urldecode(data);
 			console.log(videoInfo);
 			//figure out if videoInfo is any good
 			var pattern = /reason=/;
@@ -163,7 +163,7 @@ function showDownloadLinks () {
 	if (videoId) {
 		videoId = videoId[1];
 		document.getElementById("video_id").innerHTML = "Video ID: " + videoId + "<br>";
-		//calls a chain of ajax request callbacks and ends up printing all the links
+		//calls a chain of ajax request callbacks and ends up printing all` the links
 	        getVideoInfo(videoId);
 	} else {
 		document.getElementById("message").innerHTML = "Invalid video ID.<br>";
