@@ -6,14 +6,132 @@ function getVideoId (url) {
 }
 
 function urldecode(url) {
-  return decodeURIComponent(url.replace(/\+/g, ' '));
+	if (url) {
+		return decodeURIComponent(url.replace(/\+/g, ' '));
+	} else {
+		return ' ';
+	}
 }
 
 function printDownloadUrls (videoInfo) {
-
+	var titlePattern = /%22title%22%3A%22(.*?)%22/gm;
+	var title = titlePattern.exec(videoInfo);
+	document.getElementById("video_title").innerHTML = "Title: " + urldecode(title[1]);
+	
 	var pattern = /(?:"itag":([0-9]*),"url":"(.*?)","mimeType":"(.*?)","bitrate":([0-9]*),)(?:"width":([0-9]*),"height":([0-9]*))?/gm;
+	//first narrow down sections of videoInfo, use group 1
+	var muxedPattern = /url_encoded_fmt_stream_map=(.*?)(?:&|$)/gm;
+	var adaptivePattern = /adaptive_fmts=(.*?)(?:&|$)/gm;
+	
+	//This gets all of the raw data for one video in group 1
+	var videoPattern = /(.*?)(?:,|$)/gm;
+	
+	//This gets the next parameter, name in group 1 and value in group 2
+	var paramsPattern = /(.+?)=(.*?)(&|$)/gm;
+	
+	var muxedData = muxedPattern.exec(videoInfo);
+	muxedData[1] = urldecode(muxedData[1]);
+	console.log(muxedData[1]);
+	var adaptiveData = adaptivePattern.exec(videoInfo);
+	adaptiveData[1] = urldecode(adaptiveData[1]);
+	console.log(adaptiveData[1]);
+	
 	var m;
-
+	
+	//array of objects that will hold values for table
+	var tableData = [];
+	var rowCount = 0;
+	
+	while ((m = videoPattern.exec(muxedData[1])) !== null) {
+		// This is necessary to avoid infinite loops with zero-width matches
+		if (m.index === videoPattern.lastIndex) {
+			videoPattern.lastIndex++;
+			continue;
+		}
+		tableData[rowCount] = new Map();
+		m.forEach((match, groupIndex) => {
+			console.log(`Found match, group ${groupIndex}: ${match}`);
+			//get the raw chunk data from each video stream, parse each chunk for information and write the info to the page
+			//the data for each paramater is still url encoded
+			if (groupIndex == 1) {
+				while ((m1 = paramsPattern.exec(match)) !== null) {
+					// This is necessary to avoid infinite loops with zero-width matches
+					if (m1.index === paramsPattern.lastIndex) {
+						paramsPattern.lastIndex++;
+					}
+					
+					m1.forEach((match1, groupIndex1) => {
+						console.log(`Found match, group ${groupIndex1}: ${match1}`);
+						if (groupIndex1 == 1 && match1 != "") {
+							tableData[rowCount].set(match1, m1[groupIndex1 + 1]);
+						}
+					});
+				}
+			}
+		});
+		rowCount++;
+	}
+	while ((m = videoPattern.exec(adaptiveData[1])) !== null) {
+		// This is necessary to avoid infinite loops with zero-width matches
+		if (m.index === videoPattern.lastIndex) {
+			videoPattern.lastIndex++;
+			continue;
+		}
+		tableData[rowCount] = new Map();
+		m.forEach((match, groupIndex) => {
+			console.log(`Found match, group ${groupIndex}: ${match}`);
+			//get the raw chunk data from each video stream, parse each chunk for information and write the info to the page
+			//the data for each paramater is still url encoded
+			if (groupIndex == 1) {
+				while ((m1 = paramsPattern.exec(match)) !== null) {
+					// This is necessary to avoid infinite loops with zero-width matches
+					if (m1.index === paramsPattern.lastIndex) {
+						paramsPattern.lastIndex++;
+					}
+					
+					m1.forEach((match1, groupIndex1) => {
+						console.log(`(adaptive)Found match, group ${groupIndex1}: ${match1}`);
+						if (groupIndex1 == 1 && match1 != "") {
+							tableData[rowCount].set(match1, m1[groupIndex1 + 1]);
+						}
+					});
+				}
+			}
+		});
+		rowCount++;
+	}
+	console.log(tableData);
+	
+	//tableData is an array of maps, each map holds information about one stream
+	//each element of tableData corresponds to a row in the table
+	var table = document.getElementById("tb");
+	//Headings: Download Link, File Type, Resolution, FPS, Bitrate, Audio Sample Rate
+	for (var i = 0; i < tableData.length; i++) {
+		var row = table.insertRow(-1);
+		//Download Link
+		var cell = row.insertCell(-1);
+		var aTag = document.createElement('a');
+		aTag.setAttribute('href', urldecode(tableData[i].get("url")));
+		aTag.setAttribute('class', 'downloadUrl');
+		aTag.setAttribute('target', '_blank');
+		aTag.innerHTML = "Click to preview. Right click and 'Save link as...' to download.";
+		cell.appendChild(aTag);
+		//File Type
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("type"));
+		//Resolution
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("size"));
+		//FPS
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("fps"));
+		//Bitrate
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("bitrate"));
+		//Audio Sample Rate
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("audio_sample_rate"));
+	}
 	while ((m = pattern.exec(videoInfo)) !== null) {
 		// This is necessary to avoid infinite loops with zero-width matches
 		if (m.index === pattern.lastIndex) {
@@ -25,7 +143,7 @@ function printDownloadUrls (videoInfo) {
 		var table = document.getElementById("tb");
 		var row = table.insertRow(-1);
 		m.forEach((match, groupIndex) => {
-			//console.log(`Found match, group ${groupIndex}: ${match}`);
+			console.log(`Found match, group ${groupIndex}: ${match}`);
 			if (match != null && groupIndex > 1) {
 				var cell = row.insertCell(-1);
 				if (groupIndex == 2) {
@@ -69,10 +187,10 @@ function useSTS(sts, videoId) {
                         }
                 },
                 success: function(data) {
-                        videoInfo = urldecode(data);
+                        videoInfo = data;
                         console.log(videoInfo);
                         //figure out if videoInfo is any good
-                        var pattern = /reason=/;
+                        var pattern = /reason%22%3A/;
                         if(pattern.test(videoInfo)) {
                                 //video either doesn't exist, is region restricted, or is flagged as offensive
 				//console.log("video unavailable");
@@ -131,10 +249,10 @@ function getVideoInfo (videoId) {
 			}
     		},	
   		success: function(data) {
-    			videoInfo = urldecode(data);
+    			videoInfo = data;
 			console.log(videoInfo);
 			//figure out if videoInfo is any good
-			var pattern = /reason=/;
+			var pattern = /reason%22%3A/;
 			if(pattern.test(videoInfo)) {
 				//try the second way
 				getVideoInfo2(videoId);
