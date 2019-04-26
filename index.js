@@ -5,7 +5,7 @@ function getVideoId (url) {
 	return matches;
 }
 
-function urldecode(url) {
+function urldecode (url) {
 	if (url) {
 		return decodeURIComponent(url.replace(/\+/g, ' '));
 	} else {
@@ -13,7 +13,143 @@ function urldecode(url) {
 	}
 }
 
-function printDownloadUrls (videoInfo) {
+function updateTable (tableData) {
+	var table = document.getElementById("tb");
+	//delete all non-header rows
+	for(var i = table.rows.length - 1; i >= 0; i--)
+	{
+		table.deleteRow(i);
+	}
+	//Headings: Download Link, File Type, Resolution, FPS, Bitrate, Audio Sample Rate
+	for (var i = 0; i < tableData.length; i++) {
+		var row = table.insertRow(-1);
+		//Download Link
+		var cell = row.insertCell(-1);
+		var aTag = document.createElement('a');
+		aTag.setAttribute('href', urldecode(tableData[i].get("url")));
+		aTag.setAttribute('class', 'downloadUrl');
+		aTag.setAttribute('target', '_blank');
+		aTag.innerHTML = "Click to preview. Right click and 'Save link as...' to download.";
+		cell.appendChild(aTag);
+		//File Type
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("type"));
+		//Resolution
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("size"));
+		//FPS
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("fps"));
+		//Bitrate
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("bitrate"));
+		//Audio Sample Rate
+		cell = row.insertCell(-1);
+		cell.innerHTML = urldecode(tableData[i].get("audio_sample_rate"));
+	}
+		document.getElementById("message").innerHTML = "Download links retrieved.";
+}
+
+function decodeSignatures (tableData, videoId) {
+	var watchUrl = "https://cors-anywhere.herokuapp.com/https://www.youtube.com/watch?=" + videoId;
+	$.ajax({
+        url: "https://cors-anywhere.herokuapp.com/" + watchUrl,
+		headers: {
+			'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
+		},
+		timeout: '10000',
+		error: 
+			function(jqXHR, textStatus, errorThrown) {
+				if(textStatus==="timeout") {
+                    document.getElementById("message").innerHTML = "Connection timeout.";
+                } else {
+                    document.getElementById("message").innerHTML = "Connection failure.";
+                }
+            },
+        success:
+			function(data) {
+				console.log(data);
+                var htmlInfo = data;
+				var pattern = /"PLAYER_JS_URL":"(.*?base.js)/;
+				var match = pattern.exec(htmlInfo);
+				if (match != null) {
+					var jsUrl = "https://www.youtube.com" + match[1].replace("\\", "");
+				} else {
+					document.getElementById("message").innerHTML = "base.js not found, cannot decipher signatures.";
+				}
+				//another ajax to get the decryptor function
+				$.ajax({
+					url: "https://cors-anywhere.herokuapp.com/" + jsUrl,
+					headers: {
+						'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
+					},
+					timeout: '10000',
+					error: 
+						function(jqXHR, textStatus, errorThrown) {
+							if(textStatus==="timeout") {
+								document.getElementById("message").innerHTML = "Connection timeout.";
+							} else {
+								document.getElementById("message").innerHTML = "Connection failure.";
+							}
+						},
+					success:
+						function(data) {
+							var rawJs = data;
+							//first find decryptor function
+							var matches = null;
+							var patterns = [];
+							//possible patterns for finding the initial function name
+							patterns[0] = /yt\.akamaized\.net\/\)\s*\|\|\s*.*?\s*c\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?([a-zA-Z0-9$]+)\(/;
+							patterns[1] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?\s*([a-zA-Z0-9$]+)\(/;
+							patterns[2] = /([\"\'])signature\1\s*,\s*([a-zA-Z0-9$]+)\(/;
+							patterns[3] = /\.sig\|\|([a-zA-Z0-9$]+)\(/;
+							patterns[4] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*\([^)]*\)\s*\(\s*([a-zA-Z0-9$]+)\(/;
+							for (var i = 0; i < patterns.length; i++) {
+								matches = patterns[i].exec(rawJs);
+								if (matches != null) {
+									break;
+								}
+							}
+							console.log(matches[1]);
+							if (matches == null) {
+								document.getElementById("message").innerHTML = "cannot find initial signature function";
+							}
+							//add a line of js to the end that runs the function
+							rawJs = rawJs.replace(/}\)\(_yt_player\);/, "return " + matches[1] + "\(\);}\)\(_yt_player\);");
+							console.log(rawJs);
+							//now loop through all signature protected streams and replace "));})(_yt_player);" ""signature");})(_yt_player);"
+							var regex = new RegExp(matches[1] + "\\(.*?_yt_player\\);","gm");
+							//console.log(regex);
+							for (var i = 0; i < tableData.length; i++) {
+								if (tableData[i].get("sp") == "signature") {
+									rawJs = rawJs.replace(regex, matches[1] + "\(\"" + tableData[i].get("s") + "\"\);}\)\(_yt_player\);");
+									//console.log(rawJs);
+									var newSig = eval(rawJs);
+									console.log(tableData[i].get("s"));
+									console.log(newSig);
+									tableData[i].set("url", tableData[i].get("url").concat("&signature=" + newSig));
+									//console.log(tableData[i].get("url"));
+								}
+							}
+							//now update table
+							updateTable(tableData);
+						}
+				});
+			}
+	});
+}
+
+function checkSignatures (tableData, videoId) {
+	for (var i = 0; i < tableData.length; i++) {
+		if (tableData[i].get("sp") == "signature") {
+			console.log("Link " + i + " is signature protected.");
+			decodeSignatures(tableData, videoId);
+			return;
+		}
+	}
+	updateTable(tableData);
+}
+function prepareTableData (videoInfo, videoId) {
 	var titlePattern = /%22title%22%3A%22(.*?)%22/gm;
 	var title = titlePattern.exec(videoInfo);
 	document.getElementById("video_title").innerHTML = "Title: " + urldecode(title[1]);
@@ -101,67 +237,8 @@ function printDownloadUrls (videoInfo) {
 		rowCount++;
 	}
 	console.log(tableData);
-	
-	//tableData is an array of maps, each map holds information about one stream
-	//each element of tableData corresponds to a row in the table
-	var table = document.getElementById("tb");
-	//Headings: Download Link, File Type, Resolution, FPS, Bitrate, Audio Sample Rate
-	for (var i = 0; i < tableData.length; i++) {
-		var row = table.insertRow(-1);
-		//Download Link
-		var cell = row.insertCell(-1);
-		var aTag = document.createElement('a');
-		aTag.setAttribute('href', urldecode(tableData[i].get("url")));
-		aTag.setAttribute('class', 'downloadUrl');
-		aTag.setAttribute('target', '_blank');
-		aTag.innerHTML = "Click to preview. Right click and 'Save link as...' to download.";
-		cell.appendChild(aTag);
-		//File Type
-		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("type"));
-		//Resolution
-		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("size"));
-		//FPS
-		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("fps"));
-		//Bitrate
-		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("bitrate"));
-		//Audio Sample Rate
-		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("audio_sample_rate"));
-	}
-	while ((m = pattern.exec(videoInfo)) !== null) {
-		// This is necessary to avoid infinite loops with zero-width matches
-		if (m.index === pattern.lastIndex) {
-			pattern.lastIndex++;
-		}
-		console.log(m);
-		//for each url full match, we parse out the relevant info
-		
-		var table = document.getElementById("tb");
-		var row = table.insertRow(-1);
-		m.forEach((match, groupIndex) => {
-			console.log(`Found match, group ${groupIndex}: ${match}`);
-			if (match != null && groupIndex > 1) {
-				var cell = row.insertCell(-1);
-				if (groupIndex == 2) {
-					match = match.replace(/\\u0026/g, '&');
-					var aTag = document.createElement('a');
-					aTag.setAttribute('href', match);
-					aTag.setAttribute('class', 'downloadUrl');
-					aTag.setAttribute('target', '_blank');
-					aTag.setAttribute('download', 'videoplayback.mp4');
-					aTag.innerHTML = "Click to preview. Right click and 'Save link as...' to download.";
-					cell.appendChild(aTag);
-				} else {
-					cell.innerHTML = match;
-				}
-			}
-		});
-	}
-	//console.log(m);
+	document.getElementById("message").innerHTML = "Please wait...";
+	checkSignatures(tableData, videoId);
 }
 
 function getSTS (videoInfo) {
@@ -176,61 +253,67 @@ function useSTS(sts, videoId) {
 	stsUrl = "https://youtube.com/get_video_info?video_id=" + videoId + "&eurl=https://youtube.googleapis.com/v/" + videoId + "&sts=" + sts;
 	console.log(stsUrl);
 	$.ajax({
-                url: "https://cors-anywhere.herokuapp.com/" + stsUrl,
-                //dataType: 'json',
+        url: "https://cors-anywhere.herokuapp.com/" + stsUrl,
+		headers: {
+			'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
+		},
 		timeout: '10000',
-		error: function(jqXHR, textStatus, errorThrown) {
-                        if(textStatus==="timeout") {
-                                document.getElementById("message").innerHTML = "Connection timeout.";
-                        } else {
-                                document.getElementById("message").innerHTML = "Connection failure.";
-                        }
-                },
-                success: function(data) {
-                        videoInfo = data;
-                        console.log(videoInfo);
-                        //figure out if videoInfo is any good
-                        var pattern = /reason%22%3A/;
-                        if(pattern.test(videoInfo)) {
-                                //video either doesn't exist, is region restricted, or is flagged as offensive
-				//console.log("video unavailable");
-				document.getElementById("message").innerHTML = "Video unavailable.";
-                        } else {
-                                //print all the download urls
-                                printDownloadUrls(videoInfo);
-                        }
-                }
-        });
-
+		error: 
+			function(jqXHR, textStatus, errorThrown) {
+				if(textStatus==="timeout") {
+					document.getElementById("message").innerHTML = "Connection timeout.";
+					} else {
+						document.getElementById("message").innerHTML = "Connection failure.";
+						}
+					},
+        success: 
+			function(data) {
+				videoInfo = data;
+				console.log(videoInfo);
+				//figure out if videoInfo is any good
+				var pattern = /reason%22%3A/;
+				if(pattern.test(videoInfo)) {
+					//video either doesn't exist, is region restricted, or is flagged as offensive
+					//console.log("video unavailable");
+					document.getElementById("message").innerHTML = "Video unavailable.";
+				} else {
+					//print all the download urls
+					prepareTableData(videoInfo, videoId);
+				}
+			}
+    });
 }
 
 function getVideoInfo2 (videoId) {
 	var embedUrl = "https://youtube.com/embed/" + videoId;
 	var videoInfo = "";
 	$.ajax({
-                url: "https://cors-anywhere.herokuapp.com/" + embedUrl,
-                //dataType: 'json',
+        url: "https://cors-anywhere.herokuapp.com/" + embedUrl,
+		headers: {
+			'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
+		},
 		timeout: '10000',
-		error: function(jqXHR, textStatus, errorThrown) {
-                        if(textStatus==="timeout") {
-                                document.getElementById("message").innerHTML = "Connection timeout.";
-                        } else {
-                                document.getElementById("message").innerHTML = "Connection failure.";
-                        }
-                },
-                success: function(data) {
-                        videoInfo = data;
-			//we need to get the sts from videoInfo
-			var sts = getSTS(videoInfo);
-			if (sts) {
-				sts = sts[1];
-				useSTS(sts, videoId);
-			} else {
-				document.getElementById("message").innerHTML = "Video unavailable.";
-			}
+		error: 
+			function(jqXHR, textStatus, errorThrown) {
+				if(textStatus==="timeout") {
+                    document.getElementById("message").innerHTML = "Connection timeout.";
+                } else {
+                    document.getElementById("message").innerHTML = "Connection failure.";
                 }
-        });
-
+            },
+        success:
+			function(data) {
+                videoInfo = data;
+				//we need to get the sts from videoInfo
+				var sts = getSTS(videoInfo);
+				if (sts) {
+					sts = sts[1];
+					useSTS(sts, videoId);
+				} else {
+					document.getElementById("message").innerHTML = "Video unavailable.";
+				}
+			}
+	});
 }
 
 function getVideoInfo (videoId) {
@@ -239,28 +322,32 @@ function getVideoInfo (videoId) {
 	var videoInfo = "";
 	$.ajax({
   		url: "https://cors-anywhere.herokuapp.com/" + videoInfoUrl,
-  		//dataType: 'json',
+		headers: {
+			'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
+		},
 		timeout: '10000',
-		error: function(jqXHR, textStatus, errorThrown) {
+		error: 
+			function(jqXHR, textStatus, errorThrown) {
         		if(textStatus==="timeout") {
            			document.getElementById("message").innerHTML = "Connection timeout.";
         		} else {
-				document.getElementById("message").innerHTML = textStatus;
-			}
+					document.getElementById("message").innerHTML = textStatus;
+				}
     		},	
-  		success: function(data) {
-    			videoInfo = data;
-			console.log(videoInfo);
-			//figure out if videoInfo is any good
-			var pattern = /reason%22%3A/;
-			if(pattern.test(videoInfo)) {
-				//try the second way
-				getVideoInfo2(videoId);
-			} else {
-				//print all the download urls
-				printDownloadUrls(videoInfo);
+  		success: 
+			function(data) {
+				videoInfo = data;
+				console.log(videoInfo);
+				//figure out if videoInfo is any good
+				var pattern = /reason%22%3A/;
+				if(pattern.test(videoInfo)) {
+					//try the second way
+					getVideoInfo2(videoId);
+				} else {
+					//print all the download urls
+					prepareTableData(videoInfo, videoId);
+				}
 			}
-  		}
 	});
 }
 
