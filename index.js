@@ -51,7 +51,7 @@ function updateTable (tableData) {
 }
 
 function decodeSignatures (tableData, videoId) {
-	var watchUrl = "https://cors-proxy-9001.herokuapp.com/https://youtube.com/watch?=" + videoId;
+	var watchUrl = "https://youtube.com/watch?=" + videoId;
 	$.ajax({
         url: "https://cors-proxy-9001.herokuapp.com/" + watchUrl,
 		
