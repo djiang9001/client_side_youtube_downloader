@@ -26,7 +26,7 @@ function updateTable (tableData) {
 		//Download Link
 		var cell = row.insertCell(-1);
 		var aTag = document.createElement('a');
-		aTag.setAttribute('href', urldecode(tableData[i].get("url")));
+		aTag.setAttribute('href', "https://cors-proxy-9001.herokuapp.com/" + urldecode(tableData[i].get("url")));
 		aTag.setAttribute('class', 'downloadUrl');
 		aTag.setAttribute('target', '_blank');
 		aTag.innerHTML = "Click to preview. Right click and 'Save link as...' to download.";
@@ -51,7 +51,7 @@ function updateTable (tableData) {
 }
 
 function decodeSignatures (tableData, videoId) {
-	var watchUrl = "https://cors-proxy-9001.herokuapp.com/https://www.youtube.com/watch?=" + videoId;
+	var watchUrl = "https://cors-proxy-9001.herokuapp.com/https://youtube.com/watch?=" + videoId;
 	$.ajax({
         url: "https://cors-proxy-9001.herokuapp.com/" + watchUrl,
 		
@@ -71,7 +71,7 @@ function decodeSignatures (tableData, videoId) {
 				var pattern = /"PLAYER_JS_URL":"(.*?base.js)/;
 				var match = pattern.exec(htmlInfo);
 				if (match != null) {
-					var jsUrl = "https://www.youtube.com" + match[1].replace("\\", "");
+					var jsUrl = "https://youtube.com" + match[1].replace("\\", "");
 				} else {
 					document.getElementById("message").innerHTML = "base.js not found, cannot decipher signatures.";
 				}
