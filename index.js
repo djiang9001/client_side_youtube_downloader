@@ -51,12 +51,10 @@ function updateTable (tableData) {
 }
 
 function decodeSignatures (tableData, videoId) {
-	var watchUrl = "https://cors-anywhere.herokuapp.com/https://www.youtube.com/watch?=" + videoId;
+	var watchUrl = "https://cors-proxy-9001.herokuapp.com/https://www.youtube.com/watch?=" + videoId;
 	$.ajax({
-        url: "https://cors-anywhere.herokuapp.com/" + watchUrl,
-		headers: {
-			'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
-		},
+        url: "https://cors-proxy-9001.herokuapp.com/" + watchUrl,
+		
 		timeout: '10000',
 		error: 
 			function(jqXHR, textStatus, errorThrown) {
@@ -79,10 +77,7 @@ function decodeSignatures (tableData, videoId) {
 				}
 				//another ajax to get the decryptor function
 				$.ajax({
-					url: "https://cors-anywhere.herokuapp.com/" + jsUrl,
-					headers: {
-						'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
-					},
+					url: "https://cors-proxy-9001.herokuapp.com/" + jsUrl,
 					timeout: '10000',
 					error: 
 						function(jqXHR, textStatus, errorThrown) {
@@ -253,10 +248,8 @@ function useSTS(sts, videoId) {
 	stsUrl = "https://youtube.com/get_video_info?video_id=" + videoId + "&eurl=https://youtube.googleapis.com/v/" + videoId + "&sts=" + sts;
 	console.log(stsUrl);
 	$.ajax({
-        url: "https://cors-anywhere.herokuapp.com/" + stsUrl,
-		headers: {
-			'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
-		},
+        url: "https://cors-proxy-9001.herokuapp.com/" + stsUrl,
+		
 		timeout: '10000',
 		error: 
 			function(jqXHR, textStatus, errorThrown) {
@@ -288,10 +281,8 @@ function getVideoInfo2 (videoId) {
 	var embedUrl = "https://youtube.com/embed/" + videoId;
 	var videoInfo = "";
 	$.ajax({
-        url: "https://cors-anywhere.herokuapp.com/" + embedUrl,
-		headers: {
-			'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
-		},
+        url: "https://cors-proxy-9001.herokuapp.com/" + embedUrl,
+		
 		timeout: '10000',
 		error: 
 			function(jqXHR, textStatus, errorThrown) {
@@ -321,10 +312,8 @@ function getVideoInfo (videoId) {
 	var videoInfoUrl = "https://youtube.com/get_video_info?video_id=" + videoId + "&el=detailpage&hl=en";
 	var videoInfo = "";
 	$.ajax({
-  		url: "https://cors-anywhere.herokuapp.com/" + videoInfoUrl,
-		headers: {
-			'Origin':'2607:fea8:3c60:baf:3d3c:ee0e:8fc1:3016'
-		},
+  		url: "https://cors-proxy-9001.herokuapp.com/" + videoInfoUrl,
+		
 		timeout: '10000',
 		error: 
 			function(jqXHR, textStatus, errorThrown) {
