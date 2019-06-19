@@ -26,6 +26,7 @@ function updateTable (tableData) {
 		//Download Link
 		var cell = row.insertCell(-1);
 		var aTag = document.createElement('a');
+		console.log(tableData[i].get("url"));
 		aTag.setAttribute('href', "https://cors-proxy-9001.herokuapp.com/" + urldecode(tableData[i].get("url")));
 		aTag.setAttribute('class', 'downloadUrl');
 		aTag.setAttribute('target', '_blank');
@@ -116,13 +117,16 @@ function decodeSignatures (tableData, videoId) {
 							var regex = new RegExp(matches[1] + "\\(.*?_yt_player\\);","gm");
 							//console.log(regex);
 							for (var i = 0; i < tableData.length; i++) {
-								if (tableData[i].get("sp") == "signature") {
+								if (tableData[i].get("sp")) {
+									if (tableData[i].get("sp") == "sig") {
+										tableData[i].set("s", urldecode(tableData[i].get("s")));
+									}
 									rawJs = rawJs.replace(regex, matches[1] + "\(\"" + tableData[i].get("s") + "\"\);}\)\(_yt_player\);");
 									//console.log(rawJs);
 									var newSig = eval(rawJs);
 									console.log(tableData[i].get("s"));
 									console.log(newSig);
-									tableData[i].set("url", tableData[i].get("url").concat("&signature=" + newSig));
+									tableData[i].set("url", tableData[i].get("url").concat("&" + tableData[i].get("sp") + "=" + newSig));
 									//console.log(tableData[i].get("url"));
 								}
 							}
@@ -136,7 +140,7 @@ function decodeSignatures (tableData, videoId) {
 
 function checkSignatures (tableData, videoId) {
 	for (var i = 0; i < tableData.length; i++) {
-		if (tableData[i].get("sp") == "signature") {
+		if (tableData[i].get("sp") == "signature" || tableData[i].get("sp") == "sig") {
 			console.log("Link " + i + " is signature protected.");
 			decodeSignatures(tableData, videoId);
 			return;
