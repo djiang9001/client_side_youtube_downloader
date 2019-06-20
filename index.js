@@ -140,7 +140,7 @@ function decodeSignatures (tableData, videoId) {
 
 function checkSignatures (tableData, videoId) {
 	for (var i = 0; i < tableData.length; i++) {
-		if (tableData[i].get("sp") == "signature" || tableData[i].get("sp") == "sig") {
+		if (tableData[i].get("sp")) {
 			console.log("Link " + i + " is signature protected.");
 			decodeSignatures(tableData, videoId);
 			return;
