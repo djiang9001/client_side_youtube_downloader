@@ -91,15 +91,22 @@ function decodeSignatures (tableData, videoId) {
 					success:
 						function(data) {
 							var rawJs = data;
+							console.log(data);
 							//first find decryptor function
 							var matches = null;
 							var patterns = [];
 							//possible patterns for finding the initial function name
-							patterns[0] = /yt\.akamaized\.net\/\)\s*\|\|\s*.*?\s*c\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?([a-zA-Z0-9$]+)\(/;
-							patterns[1] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?\s*([a-zA-Z0-9$]+)\(/;
-							patterns[2] = /([\"\'])signature\1\s*,\s*([a-zA-Z0-9$]+)\(/;
-							patterns[3] = /\.sig\|\|([a-zA-Z0-9$]+)\(/;
-							patterns[4] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*\([^)]*\)\s*\(\s*([a-zA-Z0-9$]+)\(/;
+							
+							patterns[0] = /\b[cs]\s*&&\s*[adf]\.set\([^,]+\s*,\s*encodeURIComponent\s*\(\s*([a-zA-Z0-9$]+)\(/
+							patterns[1] = /\b[a-zA-Z0-9]+\s*&&\s*[a-zA-Z0-9]+\.set\([^,]+\s*,\s*encodeURIComponent\s*\(\s*([a-zA-Z0-9$]+)\(/
+							patterns[2] = /([a-zA-Z0-9$]+)\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)/
+							//old patterns, will only search these if the first ones fail
+							patterns[3] = /yt\.akamaized\.net\/\)\s*\|\|\s*.*?\s*c\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?([a-zA-Z0-9$]+)\(/;
+							patterns[4] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?\s*([a-zA-Z0-9$]+)\(/;
+							patterns[5] = /([\"\'])signature\1\s*,\s*([a-zA-Z0-9$]+)\(/;
+							patterns[6] = /\.sig\|\|([a-zA-Z0-9$]+)\(/;
+							patterns[7] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*\([^)]*\)\s*\(\s*([a-zA-Z0-9$]+)\(/;
+							
 							for (var i = 0; i < patterns.length; i++) {
 								matches = patterns[i].exec(rawJs);
 								if (matches != null) {
