@@ -37,7 +37,33 @@ function updateTable (tableData) {
 		cell.innerHTML = urldecode(tableData[i].get("type"));
 		//Resolution
 		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("size"));
+		//muxed streams don't have size, they have quality
+		/*
+		console.log("tableData dump");
+		console.log(tableData);
+		console.log(tableData[i].has("size"));
+		console.log(tableData[i].get("size"));
+		console.log(tableData[i].get("quality"));
+		*/
+		if (tableData[i].has("size")) {
+			cell.innerHTML = urldecode(tableData[i].get("size"));
+		} else {
+			var rawParam = urldecode(tableData[i].get("quality"));
+			if (rawParam == "hd1080") {
+				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 1920x1080";
+			} else if (rawParam == "hd720") {
+				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 1280x720";
+			} else if (rawParam == "large") {
+				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 858x480";
+			} else if (rawParam == "medium") {
+				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 640x360";
+			} else if (rawParam == "small") {
+				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 352x240";
+			} else {
+				cell.innerHTML = urldecode(tableData[i].get("quality"));
+			}
+		}
+		
 		//FPS
 		cell = row.insertCell(-1);
 		cell.innerHTML = urldecode(tableData[i].get("fps"));
