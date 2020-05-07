@@ -26,15 +26,15 @@ function updateTable (tableData) {
 		//Download Link
 		var cell = row.insertCell(-1);
 		var aTag = document.createElement('a');
-		console.log(tableData[i].get("url"));
-		aTag.setAttribute('href', "https://cors-proxy-9001.herokuapp.com/" + urldecode(tableData[i].get("url")));
+		console.log(tableData[i]["url"]);
+		aTag.setAttribute('href', "https://cors-proxy-9001.herokuapp.com/" + urldecode(tableData[i]["url"]));
 		aTag.setAttribute('class', 'downloadUrl');
 		aTag.setAttribute('target', '_blank');
 		aTag.innerHTML = "Click to preview. Right click and 'Save link as...' to download.";
 		cell.appendChild(aTag);
 		//File Type
 		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("type"));
+		cell.innerHTML = urldecode(tableData[i]["mimeType"]);
 		//Resolution
 		cell = row.insertCell(-1);
 		//muxed streams don't have size, they have quality
@@ -45,34 +45,34 @@ function updateTable (tableData) {
 		console.log(tableData[i].get("size"));
 		console.log(tableData[i].get("quality"));
 		*/
-		if (tableData[i].has("size")) {
-			cell.innerHTML = urldecode(tableData[i].get("size"));
+		if (tableData[i]["size"]) {
+			cell.innerHTML = urldecode(tableData[i]["size"]);
 		} else {
-			var rawParam = urldecode(tableData[i].get("quality"));
+			var rawParam = urldecode(tableData[i]["quality"]);
 			if (rawParam == "hd1080") {
-				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 1920x1080";
+				cell.innerHTML = urldecode(tableData[i]["quality"]) + "; 1920x1080";
 			} else if (rawParam == "hd720") {
-				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 1280x720";
+				cell.innerHTML = urldecode(tableData[i]["quality"]) + "; 1280x720";
 			} else if (rawParam == "large") {
-				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 858x480";
+				cell.innerHTML = urldecode(tableData[i]["quality"]) + "; 858x480";
 			} else if (rawParam == "medium") {
-				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 640x360";
+				cell.innerHTML = urldecode(tableData[i]["quality"]) + "; 640x360";
 			} else if (rawParam == "small") {
-				cell.innerHTML = urldecode(tableData[i].get("quality")) + "; 352x240";
+				cell.innerHTML = urldecode(tableData[i]["quality"]) + "; 352x240";
 			} else {
-				cell.innerHTML = urldecode(tableData[i].get("quality"));
+				cell.innerHTML = urldecode(tableData[i]["quality"]);
 			}
 		}
 		
 		//FPS
 		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("fps"));
+		cell.innerHTML = tableData[i]["fps"];
 		//Bitrate
 		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("bitrate"));
+		cell.innerHTML = tableData[i]["bitrate"];
 		//Audio Sample Rate
 		cell = row.insertCell(-1);
-		cell.innerHTML = urldecode(tableData[i].get("audio_sample_rate"));
+		cell.innerHTML = tableData[i]["audioSampleRate"];
 	}
 		document.getElementById("message").innerHTML = "Download links retrieved.";
 }
@@ -125,13 +125,14 @@ function decodeSignatures (tableData, videoId) {
 							
 							patterns[0] = /\b[cs]\s*&&\s*[adf]\.set\([^,]+\s*,\s*encodeURIComponent\s*\(\s*([a-zA-Z0-9$]+)\(/
 							patterns[1] = /\b[a-zA-Z0-9]+\s*&&\s*[a-zA-Z0-9]+\.set\([^,]+\s*,\s*encodeURIComponent\s*\(\s*([a-zA-Z0-9$]+)\(/
-							patterns[2] = /([a-zA-Z0-9$]+)\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)/
+							patterns[2] = /\b([a-zA-Z0-9$]{2})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)/
+							patterns[3] = /([a-zA-Z0-9$]+)\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)/
 							//old patterns, will only search these if the first ones fail
-							patterns[3] = /yt\.akamaized\.net\/\)\s*\|\|\s*.*?\s*c\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?([a-zA-Z0-9$]+)\(/;
-							patterns[4] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?\s*([a-zA-Z0-9$]+)\(/;
-							patterns[5] = /([\"\'])signature\1\s*,\s*([a-zA-Z0-9$]+)\(/;
-							patterns[6] = /\.sig\|\|([a-zA-Z0-9$]+)\(/;
-							patterns[7] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*\([^)]*\)\s*\(\s*([a-zA-Z0-9$]+)\(/;
+							patterns[4] = /yt\.akamaized\.net\/\)\s*\|\|\s*.*?\s*c\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?([a-zA-Z0-9$]+)\(/;
+							patterns[5] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*(?:encodeURIComponent\s*\()?\s*([a-zA-Z0-9$]+)\(/;
+							patterns[6] = /([\"\'])signature\1\s*,\s*([a-zA-Z0-9$]+)\(/;
+							patterns[7] = /\.sig\|\|([a-zA-Z0-9$]+)\(/;
+							patterns[8] = /\bc\s*&&\s*d\.set\([^,]+\s*,\s*\([^)]*\)\s*\(\s*([a-zA-Z0-9$]+)\(/;
 							
 							for (var i = 0; i < patterns.length; i++) {
 								matches = patterns[i].exec(rawJs);
@@ -150,16 +151,17 @@ function decodeSignatures (tableData, videoId) {
 							var regex = new RegExp(matches[1] + "\\(.*?_yt_player\\);","gm");
 							//console.log(regex);
 							for (var i = 0; i < tableData.length; i++) {
-								if (tableData[i].get("sp")) {
+							if (tableData[i]["sp"]) {
+								/*
 									if (tableData[i].get("sp") == "sig") {
 										tableData[i].set("s", urldecode(tableData[i].get("s")));
-									}
-									rawJs = rawJs.replace(regex, matches[1] + "\(\"" + tableData[i].get("s") + "\"\);}\)\(_yt_player\);");
+									}*/
+									rawJs = rawJs.replace(regex, matches[1] + "\(\"" + tableData[i]["s"] + "\"\);}\)\(_yt_player\);");
 									//console.log(rawJs);
 									var newSig = eval(rawJs);
-									console.log(tableData[i].get("s"));
+									console.log(tableData[i]["s"]);
 									console.log(newSig);
-									tableData[i].set("url", tableData[i].get("url").concat("&" + tableData[i].get("sp") + "=" + newSig));
+									tableData[i]["url"] = tableData[i]["url"].concat("&" + tableData[i]["sp"] + "=" + newSig);
 									//console.log(tableData[i].get("url"));
 								}
 							}
@@ -173,19 +175,74 @@ function decodeSignatures (tableData, videoId) {
 
 function checkSignatures (tableData, videoId) {
 	for (var i = 0; i < tableData.length; i++) {
-		if (tableData[i].get("sp")) {
+		if (tableData[i]["cipher"]) {
 			console.log("Link " + i + " is signature protected.");
-			decodeSignatures(tableData, videoId);
-			return;
+			// the "cipher" string contains the url, sp=sig, and s
+			var urlPattern = /url=([^&"]*)/;
+			var url = urlPattern.exec(tableData[i]["cipher"])[1];
+			tableData[i]["url"] = urldecode(url);
+			var spPattern = /sp=([^&"]*)/;
+			var sp = spPattern.exec(tableData[i]["cipher"])[1];
+			tableData[i]["sp"] = urldecode(sp);
+			var sPattern = /s=([^&"]*)/;
+			var s = sPattern.exec(tableData[i]["cipher"])[1];
+			tableData[i]["s"] = urldecode(s);
 		}
 	}
-	updateTable(tableData);
+	decodeSignatures(tableData, videoId);
 }
+
+function braceCutoff(string) {
+	//find first '{'
+	var braceCount = 0;
+	var i = 0;
+	var start = 0;
+	while (braceCount == 0) {
+		if (i >= string.length) return "";
+		if (string.charAt(i) == '{') {
+			braceCount++;
+			start = i;
+			break;
+		}
+		i++;
+	}
+	while (braceCount > 0) {
+		i++;
+		if (i >= string.length) return "Unbalanced braces";
+		if (string.charAt(i) == '{') {
+			braceCount++;
+		} else if (string.charAt(i) == '}') {
+			braceCount--;
+		}
+	}
+	return string.substring(start, i + 1);
+}
+
 function prepareTableData (videoInfo, videoId) {
 	var titlePattern = /%22title%22%3A%22(.*?)%22/gm;
 	var title = titlePattern.exec(videoInfo);
 	document.getElementById("video_title").innerHTML = "Title: " + urldecode(title[1]);
 	
+	//find beginning of player_response object
+	var player_responsePattern = /player_response=(.*)/gms;
+	var player_responseStart = (player_responsePattern.exec(videoInfo))[1];
+	//find the balanced '}' position in player_responseStart
+	var player_responseString = braceCutoff(urldecode(player_responseStart));
+	console.log(player_responseString);
+	//JSON object with relevant data
+	var player_response = JSON.parse(player_responseString);
+	console.log(player_response);
+	var tableData = [];
+	for (var stream in player_response.streamingData.adaptiveFormats) {
+		console.log(player_response.streamingData.adaptiveFormats[stream]);
+		tableData.push(player_response.streamingData.adaptiveFormats[stream]);
+	}
+	for (var stream in player_response.streamingData.formats) {
+		console.log(player_response.streamingData.formats[stream]);
+		tableData.push(player_response.streamingData.formats[stream]);
+	}
+	
+/*
 	var pattern = /(?:"itag":([0-9]*),"url":"(.*?)","mimeType":"(.*?)","bitrate":([0-9]*),)(?:"width":([0-9]*),"height":([0-9]*))?/gm;
 	//first narrow down sections of videoInfo, use group 1
 	var muxedPattern = /url_encoded_fmt_stream_map=(.*?)(?:&|$)/gm;
@@ -267,7 +324,7 @@ function prepareTableData (videoInfo, videoId) {
 			}
 		});
 		rowCount++;
-	}
+	}*/
 	console.log(tableData);
 	document.getElementById("message").innerHTML = "Please wait...";
 	checkSignatures(tableData, videoId);
