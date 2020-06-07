@@ -175,17 +175,17 @@ function decodeSignatures (tableData, videoId) {
 
 function checkSignatures (tableData, videoId) {
 	for (var i = 0; i < tableData.length; i++) {
-		if (tableData[i]["cipher"]) {
+		if (tableData[i]["signatureCipher"]) {
 			console.log("Link " + i + " is signature protected.");
-			// the "cipher" string contains the url, sp=sig, and s
+			// the "signatureCipher" string contains the url, sp=sig, and s
 			var urlPattern = /url=([^&"]*)/;
-			var url = urlPattern.exec(tableData[i]["cipher"])[1];
+			var url = urlPattern.exec(tableData[i]["signatureCipher"])[1];
 			tableData[i]["url"] = urldecode(url);
 			var spPattern = /sp=([^&"]*)/;
-			var sp = spPattern.exec(tableData[i]["cipher"])[1];
+			var sp = spPattern.exec(tableData[i]["signatureCipher"])[1];
 			tableData[i]["sp"] = urldecode(sp);
 			var sPattern = /s=([^&"]*)/;
-			var s = sPattern.exec(tableData[i]["cipher"])[1];
+			var s = sPattern.exec(tableData[i]["signatureCipher"])[1];
 			tableData[i]["s"] = urldecode(s);
 		}
 	}
