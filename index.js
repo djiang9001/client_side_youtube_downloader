@@ -273,7 +273,7 @@ function useSTS(sts, videoId) {
 				videoInfo = data;
 				console.log(videoInfo);
 				//figure out if videoInfo is any good
-				var pattern = /reason%22%3A/;
+				var pattern = /subreason%22%3A/;
 				if(pattern.test(videoInfo)) {
 					//video either doesn't exist, is region restricted, or is flagged as offensive
 					//console.log("video unavailable");
@@ -337,7 +337,7 @@ function getVideoInfo (videoId) {
 				videoInfo = data;
 				console.log(videoInfo);
 				//figure out if videoInfo is any good
-				var pattern = /reason%22%3A/;
+				var pattern = /subreason%22%3A/;
 				if(pattern.test(videoInfo)) {
 					//try the second way
 					getVideoInfo2(videoId);
