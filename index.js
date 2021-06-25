@@ -122,6 +122,8 @@ function decodeSignatures (tableData, videoId) {
 							var matches = null;
 							var patterns = [];
 							//possible patterns for finding the initial function name
+							// these patterns come from https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/extractor/youtube.py
+							// this needs to be updated with new patterns from there when youtube makes changes to the decryptor function
 							
 							patterns[0] = /\b[cs]\s*&&\s*[adf]\.set\([^,]+\s*,\s*encodeURIComponent\s*\(\s*([a-zA-Z0-9$]+)\(/
 							patterns[1] = /\b[a-zA-Z0-9]+\s*&&\s*[a-zA-Z0-9]+\.set\([^,]+\s*,\s*encodeURIComponent\s*\(\s*([a-zA-Z0-9$]+)\(/
