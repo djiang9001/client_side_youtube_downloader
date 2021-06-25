@@ -318,7 +318,7 @@ function getVideoInfo2 (videoId) {
 
 function getVideoInfo (videoId) {
 
-	var videoInfoUrl = "https://youtube.com/get_video_info?video_id=" + videoId + "&el=detailpage&hl=en";
+	var videoInfoUrl = "https://youtube.com/get_video_info?video_id=" + videoId + "&el=detailpage&hl=en&html5=1&c=TVHTML5&cver=6.20180913";
 	var videoInfo = "";
 	$.ajax({
   		url: "https://cors-proxy-9001.herokuapp.com/" + videoInfoUrl,
@@ -337,7 +337,8 @@ function getVideoInfo (videoId) {
 				videoInfo = data;
 				console.log(videoInfo);
 				//figure out if videoInfo is any good
-				var pattern = /subreason%22%3A/;
+				//var pattern = /subreason%22%3A/;
+				var pattern = /LOGIN_REQUIRED/;
 				if(pattern.test(videoInfo)) {
 					//try the second way
 					getVideoInfo2(videoId);
