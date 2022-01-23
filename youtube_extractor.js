@@ -46,7 +46,6 @@ function parseRawHTML(rawHTML) {
 		errorMessage("Error: No stream data found");
 	}
 	var streamingData = playerResponse.streamingData;
-	console.log(streamingData);
 	var regularFormats = streamingData['formats'];
 	var adaptiveFormats = streamingData['adaptiveFormats'];
 	getDecipherFunction([regularFormats, adaptiveFormats], rawHTML);
@@ -147,7 +146,6 @@ function decipherURLs(formats, rawJS) {
 }
 
 function displayFormats(formats) {
-	console.log("Displaying stream data in table...");
 	var table = document.getElementById("tb");
 	formats.forEach(formatType => {
 		formatType.forEach(format => {
