@@ -5,32 +5,13 @@
 <title>Download Youtube Videos</title>
 </head>
 <noscript>
-    <style type="text/css">
-        .pagecontainer {display:none;}
-    </style>
-    <div class="noscriptmsg">
-    You don't have javascript enabled.  Good luck with that.
-    </div>
+    This page needs JavaScript to work properly!
 </noscript>
-<div class="pagecontainer">
-	<body>
-	<h1>Download Youtube Videos</h1>
-	<div class="top">
-		<form method="POST" id="url_form">
-		Youtube url: <input type="text" name="url"><br>
-		<br>
-		<input type="submit" value="Submit">
-		</form>
-		<p id="prompt">Submit a valid Youtube URL to show available downloads for your video.</p>
-	
-		<p id="user_input" class="resets"></p>
-	
-		<p id="video_id" class="resets"></p>
-		
-		<p id="video_title" class="resets"></p>
-
-		<p id="message" class="resets"></p>
-	</div>
+<body>
+	<h1>Download Youtube videos</h1>
+	Youtube url: <input type="text" id="inputUrl"><br>
+	<button onclick="getVideos(inputUrl.value)">Submit</button>
+	<div id="message" class="resets"></div>
 	<table border="1" style="width:100%" id="download_links">
 		<thead><tr>
 			<th>Download Link</th>
@@ -42,9 +23,6 @@
 		<tr></thead>
 		<tbody id="tb" class="resets"></tbody>
 	</table>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-	<script src="index.js"></script>
-
-	</body>
-</div>
+</body>
+<script type="text/javascript" src="youtube_extractor.js"></script>
 <html>
